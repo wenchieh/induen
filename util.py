@@ -224,50 +224,6 @@ def extend(g: lil_matrix, sub, description='average'):
     return subgraph, curAveScore
 
 
-def TriMU(G: list, C: list, R, epochs, reg=1e-6):
-    """G:list of adjacency matrix
-       C:list of cross-layer dependency matrix
-    """
-    g1, g2, g3 = G[0], G[1], G[2]
-    c12, c13, c23 = C[0], C[1], C[2]
-    alpha = (norm(g1)+norm(g2)) / (2*norm(c12))
-    beta = (norm(g1)+norm(g3)) / (2*norm(c13))
-    gamma = (norm(g2)+norm(g3)) / (2*norm(c23))
-    # Initialize U,V,W
-    U = np.random.rand(g1.shape[0], R)
-    V = np.random.rand(g2.shape[0], R)
-    W = np.random.rand(g3.shape[0], R)
-
-    # L1-norm　regularization term
-    reg_u = reg * np.ones(U.shape)
-    reg_v = reg * np.ones(V.shape)
-    reg_w = reg * np.ones(W.shape)
-
-    # Multiplicative Update
-    for it in range(epochs):
-        # Update U
-        u_upper = 2 * g1 * U + alpha * c12 @ V + beta * c13 @ W
-        u_lower = U @ (2*U.T@U + alpha*V.T@V + beta*W.T@W) + reg_u
-        u_res = np.power(np.divide(u_upper, u_lower), 1/2)
-        # u_res[np.isnan(u_res)] = 0.01
-        U = np.multiply(U, u_res)
-
-        # Update V
-        v_upper = 2 * g2 * V + alpha * c12.T @ U + gamma * c23 @ W
-        v_lower = V @ (2*V.T@V + alpha*U.T@U + gamma*W.T@W) + reg_v
-        v_res = np.power(np.divide(v_upper, v_lower), 1/2)
-        # v_res[np.isnan(v_res)] = 0.01
-        V = np.multiply(V, v_res)
-
-        # Update W
-        w_upper = 2 * g3 * W + beta * c13.T @ U + gamma * c23.T @ V
-        w_lower = W @ (2*W.T@W + beta*U.T@U + gamma*V.T@V) + reg_w
-        w_res = np.power(np.divide(w_upper, w_lower), 1/2)
-        # w_res[np.isnan(w_res)] = 0.01
-        W = np.multiply(W, w_res)
-    return U, V, W
-
-
 def fastGreedyDecreasing4DSD(G):
     # Mcur is a sysmmetric matrix.
     # Mcur : lil_matrix
