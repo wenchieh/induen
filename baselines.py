@@ -48,7 +48,7 @@ def greedyCharikar(graph):
 """
 
 
-def greedyOQC(graph, alpha=1/3):
+def greedyOqc(graph, alpha=1/3):
     Mcur = graph.tolil()    # the current graph adjacency matrix
     edges = Mcur.sum() / 2   # sum of edges
     Set = set(range(0, Mcur.shape[1]))
