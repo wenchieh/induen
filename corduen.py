@@ -23,9 +23,10 @@ def aggregation(As: list, Cs: dict, GG, size_arr, c):
     return blockmat, pos
 
 
-def Corduen(As: list, Cs: dict, GG, ra=10, boost=True, R=10, epoch=50):
+def Corduen(As: list, Cs: dict, GG, ra=10, boost=True, R=10, epoch=50, reg=1e-6, seed=1234):
 
-    U, lamb, sigm, alpha = NNCF(As, Cs, GG, epoch, R)
+    # NNCF to get the factor for each layer
+    U, lamb, sigm, alpha = NNCF(As, Cs, GG, epoch, R, reg, seed)
 
     total_candidate = [list(range(a.shape[0])) for a in As]
     total_size_arr = [0] + [len(layer_cand) for layer_cand in total_candidate]
@@ -73,8 +74,7 @@ def Corduen(As: list, Cs: dict, GG, ra=10, boost=True, R=10, epoch=50):
         for i in range(layer):
             total_res.extend([idx+total_pos[i] for idx in layer_res[i]])
 
-        # If use neighbor boosting
-        # We recommend boosting for small multi-layered networks.
+        # We don't recommend boosting for lagre-scale multi-layered networks.
         if boost:
             total_res, score = neighborBoosting(totalMat, total_res)
 
@@ -86,7 +86,7 @@ def Corduen(As: list, Cs: dict, GG, ra=10, boost=True, R=10, epoch=50):
 
         boost_finalres = np.array(sorted(boost_finalres))
 
-    # Split the boot_finalres into each layer
+    # Split the boost_finalres into each layer
     finalres = []
     for i in range(layer):
         tmp_finalres = boost_finalres[(boost_finalres >= total_pos[i]) & (
