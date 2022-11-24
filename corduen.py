@@ -31,8 +31,7 @@ def Corduen(As: list, Cs: dict, GG, ra=10, boost=True, R=10, epoch=50, reg=1e-6,
     total_candidate = [list(range(a.shape[0])) for a in As]
     total_size_arr = [0] + [len(layer_cand) for layer_cand in total_candidate]
     # which could take a long time.
-    totalMat, pos = aggregation(As, Cs, GG, total_size_arr, ra)
-    total_pos = np.cumsum(total_size_arr)
+    totalMat, total_pos = aggregation(As, Cs, GG, total_size_arr, ra)
 
     layer = len(As)
     for idx in range(layer):
