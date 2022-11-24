@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.sparse import lil_matrix
 from MinTree import MinTree
+from MaxTree import MaxTree
 
 # Give a graph and its indicator vector,
 # Extend the subgraph with higher score with the neighbor nodes.
@@ -70,3 +71,43 @@ def neighborBoostingRecursive(graph: lil_matrix, sub: list):
         return neighborBoostingRecursive(graph, subgraph)
     else:
         return subgraph, curAveScore
+
+
+def fastNeighborBoosting(graph: lil_matrix, sub: list, score):
+
+    # graph: undirected graph adjacency lil_matrix
+    # sub: subgraph that to be extend , array_like data
+    # curScore : edge weights / node numbers
+
+    subgraph = sub.copy()
+    curSet = set(subgraph)
+    curAveScore = score
+    curScore = score * len(subgraph)
+    residualNodes = set(range(graph.shape[0])) - curSet
+    residualList = sorted(list(residualNodes))
+    residualPrior = np.squeeze(
+        graph[residualList, :][:, subgraph].sum(axis=1).A)
+    # Construct the maximum priority tree
+    priority = MaxTree(residualPrior)
+    isBoost = True
+
+    while isBoost:
+
+        node, prior = priority.getMax()
+        if (curScore+prior)/(len(curSet)+1) >= curAveScore:
+            curScore += prior
+            trueNode = residualList[node]
+            curSet.add(trueNode)
+            curAveScore = curScore / len(curSet)
+
+            # Change the priority of the node and its neighbors
+            priority.changeVal(node, float('-inf'))
+            for neigh in graph.rows[trueNode]:
+                if neigh not in curSet:
+                    delt = graph[trueNode, neigh]
+                    tmpNeigh = residualList.index(neigh)
+                    priority.changeVal(tmpNeigh, delt)
+        else:
+            isBoost = False
+    subgraph = sorted(list(curSet))
+    return subgraph, curAveScore
