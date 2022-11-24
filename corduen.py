@@ -2,7 +2,7 @@ import numpy as np
 from baselines import greedyCharikar
 from scipy.sparse import lil_matrix
 
-from boosting import neighborBoosting
+from boosting import neighborBoosting, fastNeighborBoosting
 from nncf import NNCF
 
 
@@ -73,9 +73,9 @@ def Corduen(As: list, Cs: dict, GG, ra=10, boost=True, R=10, epoch=50, reg=1e-6,
         for i in range(layer):
             total_res.extend([idx+total_pos[i] for idx in layer_res[i]])
 
-        # We don't recommend boosting for lagre-scale multi-layered networks.
         if boost:
-            total_res, score = neighborBoosting(totalMat, total_res)
+            # total_res, score = neighborBoosting(totalMat, total_res)
+            total_res, score = fastNeighborBoosting(totalMat, total_res, score)
 
         print(f"{r}-th column vector group , score {score}")
 
