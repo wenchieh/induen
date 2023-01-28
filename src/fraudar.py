@@ -3,10 +3,9 @@
 
 import numpy as np
 from scipy.sparse import lil_matrix
-from MinTree import MinTree
+from src.MinTree import MinTree
 
-
-def logWeightedAveDegree(self, graph):
+def logWeightedAveDegree(graph):
     # M: scipy sparse matrix
     (m, n) = graph.shape
     colSums = graph.sum(axis=0)
@@ -21,7 +20,7 @@ def Fraudar(graph):
     weight_matrix = logWeightedAveDegree(Mcur)
     return greedyBipartite(weight_matrix)
 
-
+# peeling method solving the dense subgraph in bipartite graph
 def greedyBipartite(graph):
     (m, n) = graph.shape
     Ml = graph.tolil()

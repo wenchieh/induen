@@ -1,13 +1,12 @@
 import numpy as np
 from numpy.random import MT19937, RandomState
 from scipy.sparse.linalg import norm
-from scipy.sparse import csc_matrix, lil_matrix
 from sklearn.utils.extmath import squared_norm
 from sklearn.preprocessing import normalize
 
 """ @ is equal to np.matmul()
     * is equal to np.multiply()
-"""
+""" 
 
 # Calculate the reconstruction error as equation (9)
 def reconstrcutionError(As:list, Cs:dict, beta, facMat, lambdaMat, sigmaMat, GG):
@@ -20,7 +19,7 @@ def reconstrcutionError(As:list, Cs:dict, beta, facMat, lambdaMat, sigmaMat, GG)
                 error += beta[i, j] * squared_norm(Cs[(i, j)] - facMat[i] @ sigmaMat[(i, j)] @ facMat[j].T)
     return error
 
-""" Non-negative coupled matrix factorization used in Corduen
+""" Coupled non-negative matrix factorization used in Corduen
     As : list of within-layer adjacency matrix 
     Cs : dict of cross-layer dependency matrix
     GG : the structure of the dependency in multi-layered network
@@ -29,7 +28,7 @@ def reconstrcutionError(As:list, Cs:dict, beta, facMat, lambdaMat, sigmaMat, GG)
     sigmaMat: dict of diagnoal matrix
     beta: the dispersion parameter representing the coupling strength
 """
-def NNCF(As: list, Cs: dict, GG, epoch=50, R=10, reg=1e-6, seed=12345):
+def CNMF(As: list, Cs: dict, GG: np.ndarray, beta=None, R=10, epoch=50, reg=1e-10, seed=12345):
     rs = RandomState(seed)
     mt19937 = MT19937()
     mt19937.state = rs.get_state()
@@ -37,7 +36,17 @@ def NNCF(As: list, Cs: dict, GG, epoch=50, R=10, reg=1e-6, seed=12345):
     facMat = []         # factor matrices
     lambdaMat = []      # Lambda matrices
     sigmaMat = {}       # Sigma  matrices
-    beta = np.zeros((layer, layer))
+
+    # Set beta as equation (8) heuristicly. (i.e. beta==None)
+    if type(beta)!=np.ndarray: 
+        beta = np.zeros((layer, layer))
+        for i in range(layer):
+            for j in range(layer):
+                if GG[i, j] != 0 and j > i:
+                    # Calculate beta_{ij} as equation (8)
+                    beta[i, j] = (norm(As[i])**2 + norm(As[j])**2) / (2*norm(Cs[(i, j)])**2)
+                    beta[j, i] = beta[i, j]
+
 
     # Initialize the factor matrix with column_norm = 1
     # Initialize the lambda and sigma matrix as identity matrix
@@ -47,9 +56,6 @@ def NNCF(As: list, Cs: dict, GG, epoch=50, R=10, reg=1e-6, seed=12345):
         lambdaMat.append(np.identity(R))
         for j in range(layer):
             if GG[i, j] != 0 and j > i:
-                # Calculate beta_{ij} as equation (8)
-                beta[i, j] = (norm(As[i])**2 + norm(As[j])**2) / (2*norm(Cs[(i, j)])**2) 
-                beta[j, i] = beta[i, j]
                 sigmaMat[(i, j)] = np.identity(R)
                 sigmaMat[(j, i)] = sigmaMat[(i, j)]
 
@@ -93,6 +99,7 @@ def NNCF(As: list, Cs: dict, GG, epoch=50, R=10, reg=1e-6, seed=12345):
 
 
 """ Coupled Orthogonal Non-negative Matrix Factorization used in Corduen
+    Extend the ONMF proposed by Chris Ding to coupled setting.
     As : list of within-layer adjacency matrix 
     Cs : dict of cross-layer dependency matrix
     GG : the structure of the dependency in multi-layered network
@@ -103,7 +110,7 @@ def NNCF(As: list, Cs: dict, GG, epoch=50, R=10, reg=1e-6, seed=12345):
 """
 
 
-def CONMF(As: list, Cs: dict, GG, epoch=50, R=10, reg=1e-10, seed=12345):
+def CONMF(As: list, Cs: dict, GG:np.ndarray, beta=None,R=10,epoch=50,reg=1e-10,seed=12345):
     rs = RandomState(seed)
     mt19937 = MT19937()
     mt19937.state = rs.get_state()
@@ -111,7 +118,16 @@ def CONMF(As: list, Cs: dict, GG, epoch=50, R=10, reg=1e-10, seed=12345):
     facMat = []         # factor matrices
     lambdaMat = []      # Lambda matrices
     sigmaMat = {}       # Sigma  matrices
-    beta = np.zeros((layer, layer))
+
+    # Set beta as equation (8) heuristicly. (i.e. beta==None)
+    if type(beta)!=np.ndarray: 
+        beta = np.zeros((layer, layer))
+        for i in range(layer):
+            for j in range(layer):
+                if GG[i, j] != 0 and j > i:
+                    # Calculate beta_{ij} as equation (8)
+                    beta[i, j] = (norm(As[i])**2 + norm(As[j])**2) / (2*norm(Cs[(i, j)])**2)
+                    beta[j, i] = beta[i, j]
 
     # Initialize the factor matrix with column_norm = 1
     # Initialize the lambda and sigma matrix as identity matrix
@@ -121,9 +137,6 @@ def CONMF(As: list, Cs: dict, GG, epoch=50, R=10, reg=1e-10, seed=12345):
         lambdaMat.append(np.identity(R))
         for j in range(layer):
             if GG[i, j] != 0 and j > i:
-                # Calculate beta_{ij} as equation (8)
-                beta[i, j] = (norm(As[i])**2 + norm(As[j])**2) / (2*norm(Cs[(i, j)])**2)
-                beta[j, i] = beta[i, j]
                 sigmaMat[(i, j)] = np.identity(R)
                 sigmaMat[(j, i)] = sigmaMat[(i, j)]
 

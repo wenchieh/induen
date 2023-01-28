@@ -1,6 +1,6 @@
 from cmath import inf
 import numpy as np
-from MinTree import MinTree
+from src.MinTree import MinTree
 from sklearn.preprocessing import normalize
 from scipy.sparse import lil_matrix
 
@@ -8,7 +8,6 @@ from scipy.sparse import lil_matrix
 """ Greedy algorithm for finding the densest subgraph
     graph : the input undirected and unweighted graph in scipy sparse matrix
 """
-
 
 def greedyCharikar(graph):
     Mcur = graph.tolil()    # the current graph adjacency matrix
@@ -78,7 +77,6 @@ def greedyOqc(graph, alpha=1/3):
     for idx in range(bestNumDeleted):
         finalSet.remove(deleted[idx])
     return finalSet, bestScore
-
 
 """ The MF-DSD method described as algorithm 2 in our paper
     graph :  the input undirected and unweighted graph in scipy lil_matrix
