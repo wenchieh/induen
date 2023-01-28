@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.sparse import lil_matrix
-from MinTree import MinTree
-from MaxTree import MaxTree
+from src.MinTree import MinTree
+from src.MaxTree import MaxTree
 
 # Give a graph and its indicator vector,
 # Extend the subgraph with higher score with the neighbor nodes.
