@@ -1,5 +1,4 @@
 import numpy as np
-import time
 from src.baselines import greedyCharikar
 from scipy.sparse import lil_matrix,csc_matrix
 from src.boosting import fastNeighborBoosting
@@ -80,11 +79,20 @@ def mergeML(As:list,Cs:dict,GG:np.ndarray,gamma:np.ndarray):
     return totalMat
 
 
-""" Parameters (beta,R,epoch,reg,seed) is introduced at CONMF
+""" Parameters in corduen
+    As : list of within-layer adjacency matrix 
+    Cs : dict of cross-layer dependency matrix
+    GG : the structure of the dependency in multi-layered network
+    gamma: edge importance for cross-layer network
+    boost: boosting or not. (Note: we do not recommend boosting for network with huge nnz.)
     Ortho: with orthogonal constraints or not
-    boost: with boosting or not
+    beta : coupled strength in matrix factorization
+    R    : low-rank
+    epoch: iteration number
+    reg  : l1 regularization
+    seed : random seed
 """
-def Corduen(As: list, Cs: dict, GG: np.ndarray, gamma=np.ndarray, boost=False, Ortho=True, beta=None, R=10, epoch=50, reg=1e-10, seed=1234):
+def Corduen(As: list, Cs: dict, GG: np.ndarray, gamma:np.ndarray, boost=True, Ortho=True, beta=None, R=10, epoch=50, reg=1e-10, seed=1234):
     
 
     # CONMF or CNMF to get the factor matrix for each layer
@@ -114,16 +122,14 @@ def Corduen(As: list, Cs: dict, GG: np.ndarray, gamma=np.ndarray, boost=False, O
             # set the truncated threshold as sqrt(1/n) and the top-percent as 1%
             delta = np.sqrt(1/U[i].shape[0])
             # topk = int(0.01*U[i].shape[0])
-            topk  = int(0.02*U[i].shape[0]*(1-U[i].shape[0]/nsize))
+            topk  = int(0.02*U[i].shape[0]*(1-U[i].shape[0]/nsize)) # a small trick 
             uThreshold = list(np.argwhere(U[i][:, r] > delta)[:, 0])
             uPercent = list(np.argpartition(U[i][:,r],-1*topk)[-1*topk:])
-            # Select the node subset with larger size.
+            # Select the node subset with the larger size.
             if len(uThreshold)<len(uPercent):
                 candidate.append(uPercent)
             else:
                 candidate.append(uThreshold) 
-
-        print(f"After candidating, size: {[len(cand) for cand in candidate]}")
 
         # Construct the multi-layered subgraph based on the candidate nodes
         tmpAs,tmpCs = sampleML(As,Cs,GG,candidate)
@@ -131,6 +137,8 @@ def Corduen(As: list, Cs: dict, GG: np.ndarray, gamma=np.ndarray, boost=False, O
         # Aggregation the multi-layered subgraph into a block matrix 
         size_arr = [0] + [len(cand) for cand in candidate]
         blockMat, pos = aggregation(tmpAs, tmpCs, GG, size_arr, gamma)  
+        score = blockMat.sum() / (2*len(candidate))
+        print(f"After candidating, size: {[len(cand) for cand in candidate]}, averaged degree density: {score}")
 
         # The greedy peeling can be replaced by other DSD solvers.
         res, score = greedyCharikar(blockMat)  
