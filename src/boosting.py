@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.sparse import lil_matrix
 from src.MaxTree import MaxTree
+from src.MinTree import MinTree
 
 # Give a graph and its indicator vector,
 # Extend the subgraph with higher score with the neighbor nodes.
@@ -98,7 +99,7 @@ def fastExpander(graph: lil_matrix, sub: list, score):
             curSet.add(trueNode)
             curAveScore = curScore / len(curSet)
 
-            # Change the priority of the node and its neighbors
+            # Change the priority of the node and its neighbors not in curSet.
             priority.changeVal(node, float('-inf'))
             for neigh in graph.rows[trueNode]:
                 if neigh not in curSet:
@@ -136,7 +137,7 @@ def fastContracter(graph: lil_matrix, sub: list, score):
             curSet.remove(trueNode)
             curAveScore = curScore / len(curSet)
 
-            # Change the priority of the node and its neighbors
+            # Change the priority of the node and its neighbors in curSet.
             priority.changeVal(node, float('inf'))
             for neigh in graph.rows[trueNode]:
                 if neigh in curSet:
