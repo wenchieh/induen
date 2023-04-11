@@ -1,22 +1,11 @@
-from calendar import prweek
-from cmath import inf
 import os
-import time
-import pickle
 import numpy as np
-import scipy as sc
 import scipy.sparse as sp
-import scipy.io as scio
-import networkx as nx
-import matplotlib.pyplot as plt
 
-from math import sqrt
-from MinTree import MinTree
-from numpy import matmul
+from src.MinTree import MinTree
 from sklearn.preprocessing import normalize
-from sklearn.utils.extmath import randomized_svd, squared_norm
-from scipy.sparse import csc_matrix, coo_matrix, csr_matrix, lil_matrix
-
+from sklearn.utils.extmath import squared_norm
+from scipy.sparse import lil_matrix
 
 # Norm for both dense and sparse matrix
 def norm(x):
@@ -25,14 +14,13 @@ def norm(x):
     return np.linalg.norm(x)
 
 # Check a matrix symmetric or not
-
-
 def issymmetric(x):
     if x.shape[0] != x.shape[1]:
         return False
     flag = False
     if sp.issparse(x):
-        flag = bool(1-(x.T-x).nnz)
+        if (x.T-x).nnz==0:
+            flag = True
     return flag
 
 # Check a graph have self edges or not
@@ -54,11 +42,6 @@ def random_matrix(size, prob):
 
 # Error for model the two coupled matrix
 
-
-def error(G1, G2, C, U, V, W, alpha):
-    return squared_norm(G1-U) + squared_norm(G2-V) + alpha * squared_norm(C-W)
-
-
 def Greedy(G, U):
     Score = []
     selector = []
@@ -78,7 +61,6 @@ def Greedy(G, U):
 
         while len(curSet) > 2:
             node, val = tree.getMin()
-            # node 是tree输入数组中最小值元素的索引
             curSet -= {node}
             curScore -= val
             # print('max_density',max_density,'node',node,'len s',len(curSet))
@@ -352,25 +334,6 @@ def saveres2txt(res, outpath):
         f.write(']')
         f.write('\n')
     print('save res.txt success!')
-
-
-# return the block matrix and the beginning of each submatrix
-def aggregation(As: list, Cs: dict, GG, candidate: list, c):
-    size_arr = [0] + [len(lis) for lis in candidate]
-    pos = np.cumsum(size_arr)
-    size = sum(size_arr)
-    blockmat = lil_matrix((size, size))
-    for i in range(len(As)):
-        blockmat[pos[i]:pos[i+1], pos[i]:pos[i+1]
-                 ] = As[i].tolil()[candidate[i], :][:, candidate[i]]
-        for j in range(len(As)):
-            if j > i and GG[i, j] != 0:
-                blockmat[pos[i]:pos[i+1], pos[j]:pos[j+1]] = c * \
-                    Cs[(i, j)][candidate[i], :][:, candidate[j]]
-                blockmat[pos[j]:pos[j+1], pos[i]:pos[i+1]] = c * \
-                    Cs[(i, j)][candidate[i], :][:, candidate[j]].T
-    return blockmat, pos
-
 
 def evaluate(u, v, w, truth_u, truth_v, truth_w, verbose=True):
     # Input : set
