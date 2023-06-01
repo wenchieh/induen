@@ -1,4 +1,4 @@
-# Interrelated Dense Subgraphs Detection in Multi-Layered Networks
+# Interrelated Dense Subgraphs Detection in Multilayered Networks
 
 This repo contains the implementations for the **IntDuen** Algorithm and detailed information about how to deploy it.
 
