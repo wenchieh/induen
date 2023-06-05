@@ -13,3 +13,8 @@ For dense subgraph detector, we will provide **{maxflow,greedy,greedyOqc,mfdsd,f
 **If boost == True**, corduen will apply the heuristic boosting strategy to improve the performance of the results retrived by the dsd detecor, that is, expand and contract the subgraph based on its neighbors until converge. By the way, expand and contract operations are heuristic, useful and efficient for some graph discrete optimization task, such as conductance and modularity, etc.
 
 **Relationship with Specgreedy**: If there are only one layer, then this task degenerates to detect the dense subgrpah in a single network. If we remove the non-negetive constraint of the MF module and ignore the boost module, then the algorithm is almost equivalent to the Specgreedy algorithm.
+
+
+## Dependencies
+
+`python 3.7`
