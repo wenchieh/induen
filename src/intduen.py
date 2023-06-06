@@ -82,7 +82,7 @@ def indicator(res:list):
     return 1
 
 
-""" Parameters in corduen
+""" Parameters in intduen
     As : list of within-layer adjacency matrix 
     Cs : dict of cross-layer dependency matrix
     GG : the structure of the dependency in multi-layered network

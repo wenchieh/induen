@@ -19,7 +19,7 @@ def reconstrcutionError(As:list, Cs:dict, beta, facMat, lambdaMat, sigmaMat, GG)
                 error += beta[i, j] * squared_norm(Cs[(i, j)] - facMat[i] @ sigmaMat[(i, j)] @ facMat[j].T)
     return error
 
-""" Coupled non-negative matrix factorization used in Corduen
+""" Coupled non-negative matrix factorization used in Intduen
     As : list of within-layer adjacency matrix 
     Cs : dict of cross-layer dependency matrix
     GG : the structure of the dependency in multi-layered network
@@ -99,7 +99,7 @@ def CNMF(As: list, Cs: dict, GG: np.ndarray, beta=None, R=10, epoch=50, reg=1e-1
     return facMat, lambdaMat, sigmaMat, beta
 
 
-""" Coupled Orthogonal Non-negative Matrix Factorization used in Corduen
+""" Coupled Orthogonal Non-negative Matrix Factorization used in Intduen
     Extend the ONMF proposed by Chris Ding to coupled setting.
     As : list of within-layer adjacency matrix 
     Cs : dict of cross-layer dependency matrix
