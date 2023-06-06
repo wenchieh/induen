@@ -1,5 +1,6 @@
-from cmath import inf
 import numpy as np
+from cmath import inf
+
 from src.MinTree import MinTree
 from sklearn.preprocessing import normalize
 from scipy.sparse import lil_matrix
@@ -106,6 +107,5 @@ def mfdsd(graph: lil_matrix, factor, metric='average'):
                 bestScore = score
                 finalres = candidate.copy()
         else:
-            raise ValueError(
-                "This candidate noedlist has no more than 1 element")
+            raise ValueError("This candidate noedlist has no more than 1 element")
     return finalres, bestScore

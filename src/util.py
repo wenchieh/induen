@@ -13,6 +13,7 @@ def norm(x):
         return sp.linalg.norm(x)
     return np.linalg.norm(x)
 
+
 # Check a matrix symmetric or not
 def issymmetric(x):
     if x.shape[0] != x.shape[1]:
@@ -24,8 +25,6 @@ def issymmetric(x):
     return flag
 
 # Check a graph have self edges or not
-
-
 def ishaveSelfEdge(g):
     # g : sparse adjacency matrix
     for idx in range(g.shape[0]):

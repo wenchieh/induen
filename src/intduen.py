@@ -2,8 +2,8 @@ import numpy as np
 from scipy.sparse import lil_matrix,csc_matrix
 
 from src.baselines import greedyCharikar
-from src.boosting import fastNeighborBoosting
-from src.nncf import CONMF
+from src.boosting import fastExpander
+from src.nncf import CONF 
 
 
 # Return the block matrix and the beginning of each submatrix
@@ -44,6 +44,16 @@ def convertCsc(As: list, Cs: dict, GG: np.ndarray):
             if GG[i, j] != 0:
                 Cs[(i, j)] = csc_matrix(Cs[(i, j)])
 
+def convert_tolil(As:list,Cs:dict):
+    within = [lil_matrix(a) for a in As]
+    cross = {key:lil_matrix(Cs[key]) for key in Cs.keys()}
+    return within,cross
+
+def convert_tocsc(As:list,Cs:dict):
+    within = [csc_matrix(a) for a in As]
+    cross = {key:csc_matrix(Cs[key]) for key in Cs.keys()}
+    return within,cross
+
 # Sample a sub multi-layered network via candidate nodes
 def sampleML(As: list, Cs: dict, GG:np.ndarray,candidate):
     layer = len(As)
@@ -78,7 +88,6 @@ def indicator(res:list):
     GG : the structure of the dependency in multi-layered network
     gamma: edge importance for cross-layer network
     boost: Optional, boosting or not. (Note: we do not recommend boosting for network with huge NNZ.)
-    Ortho: with orthogonal constraints or not
     beta : coupled strength in matrix factorization
     R    : low-rank
     epoch: iteration number
@@ -86,10 +95,10 @@ def indicator(res:list):
     seed : random seed
 """
 
-def Corduen(As: list, Cs: dict, GG: np.ndarray, gamma:np.ndarray, boost=True, beta=None, R=10, epoch=50, reg=1e-10, seed=1234):
+def Intduen(As: list, Cs: dict, GG: np.ndarray, gamma:np.ndarray, boost=True, beta=None, R=10, epoch=50, reg=1e-10, seed=1234):
 
     convertCsc(As,Cs,GG)
-    U, lamb, sigm, beta = CONMF(As, Cs, GG, beta,R,epoch,reg,seed)
+    U, lamb, sigm, beta = CONF(As, Cs, GG, beta,R,epoch,reg,seed)
     convertLil(As,Cs,GG)
 
     layer = len(As)
@@ -146,7 +155,7 @@ def Corduen(As: list, Cs: dict, GG: np.ndarray, gamma:np.ndarray, boost=True, be
             totalRes = []
             for i in range(layer):
                 totalRes.extend([idx+totalPos[i] for idx in layerRes[i]])
-            totalRes, density = fastNeighborBoosting(totalMat, totalRes, density)
+            totalRes, density = fastExpander(totalMat, totalRes, density)
             totalRes = np.array(sorted(list(totalRes)))
             # Split the totalRes into each layer
             for i in range(layer):

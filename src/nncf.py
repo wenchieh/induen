@@ -111,7 +111,7 @@ def CNMF(As: list, Cs: dict, GG: np.ndarray, beta=None, R=10, epoch=50, reg=1e-1
 """
 
 
-def CONMF(As: list, Cs: dict, GG:np.ndarray, beta=None,R=10,epoch=50,reg=1e-10,seed=12345):
+def CONF(As: list, Cs: dict, GG:np.ndarray, beta=None,R=10,epoch=50,reg=1e-10,seed=12345):
     rs = RandomState(seed)
     mt19937 = MT19937()
     mt19937.state = rs.get_state()
