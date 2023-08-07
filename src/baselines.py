@@ -1,22 +1,27 @@
+import sys
+sys.path.append("..")
+
+import time
 import numpy as np
 from cmath import inf
 
 from src.MinTree import MinTree
 from sklearn.preprocessing import normalize
 from scipy.sparse import lil_matrix
+from scipy.sparse import linalg
 
 
 """ Greedy algorithm for finding the densest subgraph
     graph : the input undirected and unweighted graph in scipy sparse matrix
 """
 
-def greedyCharikar(graph):
-    Mcur = graph.tolil()    # the current graph adjacency matrix
-    curScore = Mcur.sum() / 2
-    Set = set(range(0, Mcur.shape[1]))
+def greedyCharikar(graph:lil_matrix):
+    graph = graph.tolil()    # the current graph adjacency matrix
+    curScore = graph.sum() / 2
+    Set = set(range(0, graph.shape[1]))
     bestAveScore = curScore / len(Set)
-    Deltas = np.squeeze(Mcur.sum(axis=1).A)
-    tree = MinTree(Deltas)
+    deltas = np.squeeze(graph.sum(axis=1).A)
+    tree = MinTree(deltas)
     numDeleted = 0
     deleted = []
     bestNumDeleted = 0
@@ -24,8 +29,8 @@ def greedyCharikar(graph):
         node, val = tree.getMin()
         curScore -= val
         # Update priority for the neighbors of the deleted node
-        for j in Mcur.rows[node]:
-            delt = Mcur[node, j]
+        for j in graph.rows[node]:
+            delt = graph[node, j]
             tree.changeVal(j, -delt)
         Set -= {node}
         tree.changeVal(node, float('inf'))
@@ -36,24 +41,23 @@ def greedyCharikar(graph):
             bestAveScore = curAveScore
             bestNumDeleted = numDeleted
     # reconstruct the best sets
-    finalSet = set(range(0, Mcur.shape[1]))
+    finalSet = set(range(0, graph.shape[1]))
     for idx in range(bestNumDeleted):
         finalSet.remove(deleted[idx])
-    return finalSet, bestAveScore
-
+    finalres = sorted(finalSet)
+    return finalres, bestAveScore
 
 """ GreedyOQC algorithm for finding the alpha-quasi-clique
     graph : the input undirected and unweighted graph in scipy sparse matrix
     alpha : parameter of the alpha-quasi-clique, default 1/3
 """
 
-
-def greedyOqc(graph, alpha=1/3):
-    Mcur = graph.tolil()    # the current graph adjacency matrix
-    edges = Mcur.sum() / 2   # sum of edges
-    Set = set(range(0, Mcur.shape[1]))
-    bestScore = curScore = edges - alpha * (len(Set)*(len(Set)-1))/2
-    deltas = np.squeeze(Mcur.sum(axis=1).A)
+def greedyOqc(graph:lil_matrix, alpha=1/3):
+    graph = graph.tolil()    # the current graph adjacency matrix
+    edges = graph.sum() / 2   # sum of edges
+    Set = set(range(0, graph.shape[1]))
+    best_score = curScore = edges - alpha * (len(Set)*(len(Set)-1))/2
+    deltas = np.squeeze(graph.sum(axis=1).A)
     tree = MinTree(deltas)
     numDeleted = 0
     deleted = []
@@ -62,50 +66,59 @@ def greedyOqc(graph, alpha=1/3):
         node, val = tree.getMin()
         edges -= val
         # Update priority for the neighbors of the deleted node
-        for j in Mcur.rows[node]:
-            delt = Mcur[node, j]
+        for j in graph.rows[node]:
+            delt = graph[node, j]
             tree.changeVal(j, -delt)
         Set -= {node}
         tree.changeVal(node, float('inf'))
         deleted.append(node)
         numDeleted += 1
         curScore = edges - alpha * (len(Set)*(len(Set)-1))/2
-        if curScore > bestScore:
-            bestScore = curScore
+        if curScore > best_score:
+            best_score = curScore
             bestNumDeleted = numDeleted
     # reconstruct the best sets
-    finalSet = set(range(0, Mcur.shape[1]))
+    finalSet = set(range(0, graph.shape[1]))
     for idx in range(bestNumDeleted):
         finalSet.remove(deleted[idx])
-    return finalSet, bestScore
+    finalres = sorted(finalSet)
+    return finalres, best_score
+
+
+def specgreedy(graph:lil_matrix):
+    from specgreedy.main import specgreedy_monopartite
+    res,score = specgreedy_monopartite(graph)
+    return res,score
+    
+def coreds(graph:lil_matrix):
+    from eds_kcore.main import efficient_core_dsd
+    res,score = efficient_core_dsd(graph)
+    return res,score
 
 """ The MF-DSD method described as algorithm 2 in our paper
+    which is similar with the eigenspokes algorithm.
     graph :  the input undirected and unweighted graph in scipy lil_matrix
     factor : the factor matrix obtained from nmf,svd,nncf or other matrix factorization techniques
     metric: average density(default), volume density or others
 """
 
-
-def mfdsd(graph: lil_matrix, factor, metric='average'):
-    bestScore = -inf
-    nodenum, rank = factor.shape
-    noru = normalize(factor, axis=0)  # column vector normalization
-    threshold = np.sqrt(1/nodenum)
+def mfdsd(graph:lil_matrix, k=10, metric='average'):
+    RU, RS, RVt = linalg.svds(graph.asfptype(), k)
+    best_score = -inf
+    number_of_nodes, rank = RU.shape
+    noru = normalize(RU, axis=0)  # column vector normalization
+    threshold = np.sqrt(1/number_of_nodes)
     for idx in range(rank):
-        # select import nodes based on the threshold sqrt(1/n)
         candidate = list(np.argwhere(np.abs(noru[:, idx]) > threshold)[:, 0])
-        # construct subgraph by the candidate node list
         subgraph = graph.asfptype()[candidate, :][:, candidate]
         if len(candidate) > 1:
             if metric == 'average':
                 score = subgraph.sum() / len(candidate)
-                # finalSet, score = fastGreedyDecreasing4DSD(graph)
             elif metric == 'clique':
                 score = subgraph.sum() / (len(candidate)*(len(candidate)-1))
-                # finalSet, score = fastGreedyDecreasing(graph)
-            if score > bestScore:
-                bestScore = score
+            if score > best_score:
+                best_score = score
                 finalres = candidate.copy()
         else:
-            raise ValueError("This candidate noedlist has no more than 1 element")
-    return finalres, bestScore
+            raise ValueError("This candidates has no more than 1 element")
+    return finalres, best_score

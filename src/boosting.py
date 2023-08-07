@@ -7,7 +7,7 @@ from src.MinTree import MinTree
     Expand and contract the subgraph with higher score with the neighbor nodes.
 """
 
-def fastExpander(graph: lil_matrix, sub: list, score):
+def expander(graph: lil_matrix, sub: list, score):
 
     # graph: undirected graph adjacency lil_matrix
     # sub: subgraph that to be expand , array_like data
@@ -46,7 +46,7 @@ def fastExpander(graph: lil_matrix, sub: list, score):
     return subgraph, curAveScore
 
 
-def fastContracter(graph: lil_matrix, sub: list, score):
+def contracter(graph: lil_matrix, sub: list, score):
 
     # graph: undirected graph adjacency lil_matrix
     # sub: subgraph that to be contract , array_like data

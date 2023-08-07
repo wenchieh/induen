@@ -15,10 +15,16 @@ def logWeightedAveDegree(graph):
     return graph * colDiag
 
 
-def Fraudar(graph):
+# we adopt the union of row and column set for the monopartite graph
+def Fraudar(graph, monopartite=True):
     Mcur = graph.copy().tolil()
     weight_matrix = logWeightedAveDegree(Mcur)
-    return greedyBipartite(weight_matrix)
+    row,col,score = greedyBipartite(weight_matrix)
+    if monopartite:
+        res = sorted(row.union(col))
+    else:
+        res = [sorted(row),sorted(col)]
+    return res,score
 
 # peeling method solving the dense subgraph in bipartite graph
 def greedyBipartite(graph):
